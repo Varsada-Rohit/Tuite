@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Tuite",
+    "slug": "tuite-mobile",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "scheme": "tuite",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tuite.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1E40AF"
+      },
+      "package": "com.tuite.mobile"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

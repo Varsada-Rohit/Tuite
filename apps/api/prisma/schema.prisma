@@ -1,0 +1,104 @@
+// ──────────────────────────────────────────────────────────
+// Tuite Platform — Prisma Schema
+// ──────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  OWNER
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+enum FeatureName {
+  NOTES
+  VIDEO_LECTURES
+  ONLINE_TESTS
+  COMMUNICATION
+}
+
+// ─── Models ──────────────────────────────────────────────
+
+model Tenant {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String   @db.VarChar(255)
+  slug            String   @unique @db.VarChar(50)
+  logo_url        String?  @db.VarChar(2048)
+  primary_color   String   @default("#1E40AF") @db.VarChar(7)
+  secondary_color String   @default("#F3F4F6") @db.VarChar(7)
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Relations
+  users         User[]
+  feature_flags TenantFeatureFlag[]
+
+  @@index([slug])
+  @@map("tenants")
+}
+
+model TenantFeatureFlag {
+  id           String      @id @default(uuid()) @db.Uuid
+  tenant_id    String      @db.Uuid
+  feature_name FeatureName
+  is_enabled   Boolean     @default(false)
+
+  // Relations
+  tenant Tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+
+  @@unique([tenant_id, feature_name])
+  @@index([tenant_id])
+  @@map("tenant_feature_flags")
+}
+
+model User {
+  id         String   @id @default(uuid()) @db.Uuid
+  tenant_id  String?  @db.Uuid
+  phone      String   @db.VarChar(20)
+  full_name  String?  @db.VarChar(255)
+  role       Role
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  tenant         Tenant?        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  refresh_tokens RefreshToken[]
+
+  // Unique constraint for tenant-scoped phone.
+  // Note: For SUPER_ADMIN (tenant_id = null), we add a partial unique
+  // index via a raw SQL migration to handle NULL properly.
+  @@unique([tenant_id, phone])
+  @@index([tenant_id])
+  @@index([phone])
+  @@map("users")
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  token_hash String   @db.VarChar(64)
+  expires_at DateTime
+  revoked    Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  // Relations
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([token_hash])
+  @@index([user_id])
+  @@map("refresh_tokens")
+}
