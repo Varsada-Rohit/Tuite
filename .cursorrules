@@ -3,29 +3,40 @@
 You are an expert Principal Full-Stack Engineer. You are helping develop "Tuite", a multi-tenant SaaS platform based on the "Tuition Management App" PRD. You must strictly adhere to the following rules for all code generation, refactoring, and architectural decisions.
 
 ## 1. Multi-Tenancy & Security (CRITICAL)
-* **Zero Data Leaks:** Tuite operates on a single codebase with database-level isolation. You MUST ensure that every database query (Read, Update, Delete) against a tenant-scoped model includes a strict `where: { tenant_id: request.tenantId }` clause to prevent cross-tenant data leaks.
-* **Strict API Verification:** Every protected API endpoint must enforce strict tenant-ID verification using NestJS Guards and interceptors. 
-* **Role-Based Access Control (RBAC):** Always respect the role hierarchy (Super Admin, Tuition Owner, Teacher, Student, Parent). Ensure Super Admins bypass standard tenant locks (their `tenant_id` is null).
-* **Validation:** Always use global `ValidationPipe` with `{ whitelist: true, forbidNonWhitelisted: true }` for all DTOs to sanitize incoming payloads.
+
+- **Zero Data Leaks:** Tuite operates on a single codebase with database-level isolation. You MUST ensure that every database query (Read, Update, Delete) against a tenant-scoped model includes a strict `where: { tenant_id: request.tenantId }` clause to prevent cross-tenant data leaks.
+- **Strict API Verification:** Every protected API endpoint must enforce strict tenant-ID verification using NestJS Guards and interceptors.
+- **Role-Based Access Control (RBAC):** Always respect the role hierarchy (Super Admin, Tuition Owner, Teacher, Student, Parent). Ensure Super Admins bypass standard tenant locks (their `tenant_id` is null).
+- **Validation:** Always use global `ValidationPipe` with `{ whitelist: true, forbidNonWhitelisted: true }` for all DTOs to sanitize incoming payloads.
 
 ## 2. Monorepo Architecture Compliance
-* **Turborepo Boundaries:** We use a Turborepo structure (`apps/api`, `apps/admin-web`, `apps/mobile-app`, `packages/shared-types`). 
-* **Shared Contracts:** Never duplicate TypeScript interfaces across apps. If a type is used by both the NestJS backend and a frontend client, it MUST be exported from `packages/shared-types` and imported into the respective apps.
 
-## 3. Documentation & State Syncing
-* **Always Update Docs:** Whenever you add a new feature, modify the database schema, or change an API endpoint, you must proactively ask to update the respective markdown files in the `docs/` directory.
-* **Feature Flags:** Remember that modules (Video Lectures, Notes, Online Tests) are toggleable by the Super Admin. Document any new feature flags added to the schema.
+- **Turborepo Boundaries:** We use a Turborepo structure (`apps/api`, `apps/admin-web`, `apps/mobile-app`, `packages/shared-types`).
+- **Shared Contracts:** Never duplicate TypeScript interfaces across apps. If a type is used by both the NestJS backend and a frontend client, it MUST be exported from `packages/shared-types` and imported into the respective apps.
 
-## 4. Enterprise Logging & Observability
-* **Structured Logging Only:** Use `nestjs-pino` for backend logging. Do not use `console.log`.
-* **Contextual Tracing:** Ensure every log payload automatically includes `x-request-id`, `tenantId`, and `userId` using `AsyncLocalStorage` middleware.
-* **Data Sanitization:** NEVER log sensitive Personally Identifiable Information (PII) including passwords, JWT access/refresh tokens, phone numbers, or Firebase ID tokens.
+## 3. Reusable Components & Design Sync
 
-## 5. Testing & Reliability
-* **Mandatory Coverage:** You must write Jest tests (Unit and/or E2E) for all new modules. 
-* **Test Isolation:** Your E2E tests must explicitly verify negative security cases—e.g., proving that a user from Tenant A receives a `403 Forbidden` when attempting to access a resource belonging to Tenant B.
+- **Design Tokens:** To keep the web dashboard (Next.js) and mobile app (React Native) in perfect sync, rely on a shared `packages/design-tokens` package to centralize theme tokens (colors, spacing, typography).
+- **Platform-Specific Rendering:** While types and design tokens are shared, use platform-specific UI patterns where appropriate (e.g., Tailwind/HTML for complex web data tables, and React Native StyleSheet for mobile lists) rather than forcing unnatural DOM/View structures across platforms.
 
-## 6. Specific PRD Constraints (Tuition Management App)
-* **Media Storage:** Do NOT write backend logic for raw video hosting. Video lectures must only be embedded via unlisted YouTube/Vimeo URLs. Study materials (PDFs/Docs) should rely on signed URLs via Cloud Storage.
-* **Notifications:** Ensure all push notifications are architected to route through Firebase Cloud Messaging (FCM).
-* **Mobile-First Data Design:** Keep backend payloads lightweight. The primary consumers of the Teacher, Student, and Parent endpoints will be a React Native mobile application.
+## 4. Documentation & State Syncing
+
+- **Always Update Docs:** Whenever you add a new feature, modify the database schema, or change an API endpoint, you must proactively ask to update the respective markdown files in the `docs/` directory.
+- **Feature Flags:** Remember that modules (Video Lectures, Notes, Online Tests) are toggleable by the Super Admin. Document any new feature flags added to the schema.
+
+## 5. Enterprise Logging & Observability
+
+- **Structured Logging Only:** Use `nestjs-pino` for backend logging. Do not use `console.log`.
+- **Contextual Tracing:** Ensure every log payload automatically includes `x-request-id`, `tenantId`, and `userId` using `AsyncLocalStorage` middleware.
+- **Data Sanitization:** NEVER log sensitive Personally Identifiable Information (PII) including passwords, JWT access/refresh tokens, phone numbers, or Firebase ID tokens.
+
+## 6. Testing & Reliability
+
+- **Mandatory Coverage:** You must write Jest tests (Unit and/or E2E) for all new modules.
+- **Test Isolation:** Your E2E tests must explicitly verify negative security cases—e.g., proving that a user from Tenant A receives a `403 Forbidden` when attempting to access a resource belonging to Tenant B.
+
+## 7. Specific PRD Constraints (Tuition Management App)
+
+- **Media Storage:** Do NOT write backend logic for raw video hosting. Video lectures must only be embedded via unlisted YouTube/Vimeo URLs. Study materials (PDFs/Docs) should rely on signed URLs via Cloud Storage.
+- **Notifications:** Ensure all push notifications are architected to route through Firebase Cloud Messaging (FCM).
+- **Mobile-First Data Design:** Keep backend payloads lightweight. The primary consumers of the Teacher, Student, and Parent endpoints will be a React Native mobile application.
