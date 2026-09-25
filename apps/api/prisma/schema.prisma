@@ -38,6 +38,9 @@ model Tenant {
   logo_url        String?  @db.VarChar(2048)
   primary_color   String   @default("#1E40AF") @db.VarChar(7)
   secondary_color String   @default("#F3F4F6") @db.VarChar(7)
+  contact_email   String?  @db.VarChar(320)
+  contact_phone   String?  @db.VarChar(20)
+  address         String?  @db.Text
   is_active       Boolean  @default(true)
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
@@ -45,6 +48,7 @@ model Tenant {
   // Relations
   users         User[]
   feature_flags TenantFeatureFlag[]
+  batches       Batch[]
 
   @@index([slug])
   @@map("tenants")
@@ -75,8 +79,9 @@ model User {
   updated_at DateTime @updatedAt
 
   // Relations
-  tenant         Tenant?        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
-  refresh_tokens RefreshToken[]
+  tenant          Tenant?        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  refresh_tokens  RefreshToken[]
+  teacher_batches TeacherBatch[]
 
   // Unique constraint for tenant-scoped phone.
   // Note: For SUPER_ADMIN (tenant_id = null), we add a partial unique
@@ -85,6 +90,38 @@ model User {
   @@index([tenant_id])
   @@index([phone])
   @@map("users")
+}
+
+model Batch {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenant_id   String   @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  tenant   Tenant         @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  teachers TeacherBatch[]
+
+  @@index([tenant_id])
+  @@map("batches")
+}
+
+model TeacherBatch {
+  id          String   @id @default(uuid()) @db.Uuid
+  user_id     String   @db.Uuid
+  batch_id    String   @db.Uuid
+  assigned_at DateTime @default(now())
+
+  // Relations
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  batch Batch @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, batch_id])
+  @@index([batch_id])
+  @@map("teacher_batches")
 }
 
 model RefreshToken {

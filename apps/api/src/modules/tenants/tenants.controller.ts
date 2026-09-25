@@ -1,13 +1,14 @@
-import { Controller, Get, Query, NotFoundException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
-import { Public } from '../../common/decorators';
+import { Controller, Get, Patch, Query, Body, NotFoundException } from '@nestjs/common';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { Role } from '@tuite/shared-types';
+import { Public, Roles, CurrentTenant } from '../../common/decorators';
 import { TenantsService } from './tenants.service';
+import { UpdateTenantProfileDto } from './dto';
 
 /**
- * Public tenant endpoints — no authentication required.
- * Used by the frontend for white-labeling before the user logs in.
+ * Tenant endpoints — public resolve + authenticated profile management.
  */
-@ApiTags('Tenants (Public)')
+@ApiTags('Tenants')
 @Controller('api/v1/tenants')
 export class TenantsController {
   constructor(private readonly tenantsService: TenantsService) {}
@@ -27,5 +28,22 @@ export class TenantsController {
       throw new NotFoundException('Slug query parameter is required');
     }
     return this.tenantsService.resolveBySlug(slug);
+  }
+
+  /**
+   * PATCH /api/v1/tenants/profile
+   * Update the current tenant's profile (contact info, branding).
+   * Only accessible by the Tuition Owner.
+   */
+  @Patch('profile')
+  @ApiBearerAuth()
+  @Roles(Role.OWNER)
+  @ApiOperation({ summary: 'Update tenant profile (Owner only)' })
+  @ApiResponse({ status: 200, description: 'Profile updated successfully' })
+  async updateProfile(
+    @CurrentTenant() tenantId: string,
+    @Body() dto: UpdateTenantProfileDto,
+  ) {
+    return this.tenantsService.updateProfile(tenantId, dto);
   }
 }

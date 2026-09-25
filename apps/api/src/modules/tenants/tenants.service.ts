@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Role, FeatureName, TenantProfile } from '@tuite/shared-types';
 import { PrismaService } from '../../database/prisma.service';
-import { CreateTenantDto, UpdateFeatureFlagsDto, SeedOwnerDto } from './dto';
+import { CreateTenantDto, UpdateFeatureFlagsDto, SeedOwnerDto, UpdateTenantProfileDto } from './dto';
 
 @Injectable()
 export class TenantsService {
@@ -27,6 +27,9 @@ export class TenantsService {
         logo_url: true,
         primary_color: true,
         secondary_color: true,
+        contact_email: true,
+        contact_phone: true,
+        address: true,
         is_active: true,
       },
     });
@@ -42,6 +45,42 @@ export class TenantsService {
       logoUrl: tenant.logo_url,
       primaryColor: tenant.primary_color,
       secondaryColor: tenant.secondary_color,
+      contactEmail: tenant.contact_email,
+      contactPhone: tenant.contact_phone,
+      address: tenant.address,
+    };
+  }
+
+  /**
+   * Owner: Update tenant profile (contact info, branding).
+   */
+  async updateProfile(tenantId: string, dto: UpdateTenantProfileDto): Promise<TenantProfile> {
+    await this.findOrFail(tenantId);
+
+    const updated = await this.prisma.withoutTenant().tenant.update({
+      where: { id: tenantId },
+      data: {
+        ...(dto.contactEmail !== undefined && { contact_email: dto.contactEmail }),
+        ...(dto.contactPhone !== undefined && { contact_phone: dto.contactPhone }),
+        ...(dto.address !== undefined && { address: dto.address }),
+        ...(dto.logoUrl !== undefined && { logo_url: dto.logoUrl }),
+        ...(dto.primaryColor !== undefined && { primary_color: dto.primaryColor }),
+        ...(dto.secondaryColor !== undefined && { secondary_color: dto.secondaryColor }),
+      },
+    });
+
+    this.logger.log(`Tenant ${tenantId} profile updated`);
+
+    return {
+      id: updated.id,
+      name: updated.name,
+      slug: updated.slug,
+      logoUrl: updated.logo_url,
+      primaryColor: updated.primary_color,
+      secondaryColor: updated.secondary_color,
+      contactEmail: updated.contact_email,
+      contactPhone: updated.contact_phone,
+      address: updated.address,
     };
   }
 

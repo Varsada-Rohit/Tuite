@@ -1,6 +1,7 @@
 {
   "extends": "@tuite/typescript-config/nextjs.json",
   "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "esnext"],
     "paths": {
       "@/*": ["./src/*"]
     }

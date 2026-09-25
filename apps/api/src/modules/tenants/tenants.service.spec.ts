@@ -39,6 +39,9 @@ describe('TenantsService', () => {
         logo_url: null,
         primary_color: '#000000',
         secondary_color: '#ffffff',
+        contact_email: 'test@academy.com',
+        contact_phone: '+919876543210',
+        address: '123 Main St',
         is_active: true,
         created_at: new Date(),
         updated_at: new Date(),
@@ -55,6 +58,9 @@ describe('TenantsService', () => {
         logoUrl: mockTenant.logo_url,
         primaryColor: mockTenant.primary_color,
         secondaryColor: mockTenant.secondary_color,
+        contactEmail: mockTenant.contact_email,
+        contactPhone: mockTenant.contact_phone,
+        address: mockTenant.address,
       });
 
       expect(prismaService.tenant.findUnique).toHaveBeenCalledWith({
@@ -66,6 +72,9 @@ describe('TenantsService', () => {
           logo_url: true,
           primary_color: true,
           secondary_color: true,
+          contact_email: true,
+          contact_phone: true,
+          address: true,
           is_active: true,
         },
       });

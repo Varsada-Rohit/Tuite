@@ -12,6 +12,9 @@ export interface TenantProfile {
   logoUrl: string | null;
   primaryColor: string;
   secondaryColor: string;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  address: string | null;
 }
 
 /** Full tenant record (admin view) */
@@ -50,4 +53,14 @@ export interface UpdateFeatureFlagsRequest {
 export interface SeedTenantOwnerRequest {
   phone: string;
   fullName: string;
+}
+
+/** Request body for updating the tenant profile (by OWNER) */
+export interface UpdateTenantProfileRequest {
+  contactEmail?: string;
+  contactPhone?: string;
+  address?: string;
+  logoUrl?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
 }

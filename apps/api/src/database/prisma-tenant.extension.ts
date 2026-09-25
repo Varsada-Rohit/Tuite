@@ -5,7 +5,7 @@ import { Prisma } from '@prisma/client';
  * The tenant-scoping extension will automatically inject `tenant_id` filters
  * for these models on all read, update, and delete operations.
  */
-const TENANT_SCOPED_MODELS: string[] = ['User', 'TenantFeatureFlag'];
+const TENANT_SCOPED_MODELS: string[] = ['User', 'TenantFeatureFlag', 'Batch'];
 
 /**
  * Operations that should have the tenant_id injected into `where` clauses.

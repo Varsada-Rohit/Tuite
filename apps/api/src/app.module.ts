@@ -13,6 +13,8 @@ import { DatabaseModule } from './database';
 import { AuthModule } from './modules/auth/auth.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { UsersModule } from './modules/users/users.module';
+import { BatchesModule } from './modules/batches/batches.module';
+import { StaffModule } from './modules/staff/staff.module';
 
 // Common
 import { JwtAuthGuard, RolesGuard, TenantGuard } from './common/guards';
@@ -109,6 +111,8 @@ import { RequestIdMiddleware } from './common/middleware';
     AuthModule,
     TenantsModule,
     UsersModule,
+    BatchesModule,
+    StaffModule,
   ],
   providers: [
     // Global guards — applied in order: JWT → Roles → Tenant

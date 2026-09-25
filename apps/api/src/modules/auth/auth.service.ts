@@ -103,6 +103,63 @@ export class AuthService {
   }
 
   /**
+   * Super Admin login flow:
+   * 1. Verify Firebase ID token → extract phone number.
+   * 2. Find the user with tenant_id = null and matching phone.
+   * 3. Issue internal JWT access + refresh token pair.
+   */
+  async adminLogin(firebaseIdToken: string): Promise<AuthResponse> {
+    // Step 1: Verify Firebase token
+    let decodedToken;
+    try {
+      decodedToken = await this.firebaseService.verifyIdToken(firebaseIdToken);
+    } catch (error) {
+      this.logger.warn(`Firebase token verification failed: ${(error as Error).message}`);
+      throw new UnauthorizedException('Invalid or expired Firebase token');
+    }
+
+    const phoneNumber = decodedToken.phone_number;
+    if (!phoneNumber) {
+      throw new UnauthorizedException('Firebase token does not contain a phone number');
+    }
+
+    // Step 2: Find user
+    const user = await this.prisma.withoutTenant().user.findFirst({
+      where: {
+        tenant_id: null,
+        phone: phoneNumber,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User is not a super admin or does not exist');
+    }
+
+    if (user.role !== Role.SUPER_ADMIN) {
+      throw new UnauthorizedException('User is not a super admin');
+    }
+
+    if (!user.is_active) {
+      throw new ForbiddenException('Your account has been deactivated');
+    }
+
+    // Step 3: Issue tokens
+    const tokens = await this.issueTokens(user.id, user.role as Role, null);
+
+    return {
+      ...tokens,
+      user: {
+        id: user.id,
+        phone: user.phone,
+        fullName: user.full_name,
+        role: user.role as Role,
+        tenantId: null,
+      },
+    };
+  }
+
+
+  /**
    * Refresh token rotation:
    * 1. Hash the incoming raw token → find the matching DB record.
    * 2. Validate it's not revoked or expired.

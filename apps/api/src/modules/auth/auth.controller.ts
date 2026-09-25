@@ -3,7 +3,7 @@ import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Public } from '../../common/decorators';
 import { AuthService } from './auth.service';
-import { VerifyPhoneDto, RefreshTokenDto } from './dto';
+import { VerifyPhoneDto, RefreshTokenDto, AdminLoginDto } from './dto';
 
 @ApiTags('Authentication')
 @Controller('api/v1/auth')
@@ -25,6 +25,21 @@ export class AuthController {
   @ApiResponse({ status: 403, description: 'User or tenant is inactive' })
   async verifyPhone(@Body() dto: VerifyPhoneDto) {
     return this.authService.verifyPhone(dto.firebaseIdToken, dto.tenantSlug);
+  }
+
+  /**
+   * POST /api/v1/auth/admin-login
+   * Super admin login without a tenant.
+   */
+  @Public()
+  @Post('admin-login')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Super Admin login via Firebase OTP' })
+  @ApiResponse({ status: 200, description: 'Authentication successful' })
+  @ApiResponse({ status: 401, description: 'Invalid Firebase token or not a super admin' })
+  async adminLogin(@Body() dto: AdminLoginDto) {
+    return this.authService.adminLogin(dto.firebaseIdToken);
   }
 
   /**
