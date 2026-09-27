@@ -40,7 +40,16 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new ApiError(response.status, error.detail || error.message || 'Request failed', error);
+      // NestJS validation pipe returns { message: string | string[] }
+      let errorMessage = 'Request failed';
+      if (error.detail) {
+        errorMessage = error.detail;
+      } else if (Array.isArray(error.message)) {
+        errorMessage = error.message.join('. ');
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      throw new ApiError(response.status, errorMessage, error);
     }
 
     // Handle 204 No Content

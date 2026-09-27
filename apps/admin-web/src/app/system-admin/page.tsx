@@ -25,12 +25,14 @@ export default function SystemAdminDashboard() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ name: '', slug: '', contactEmail: '', contactPhone: '' });
   const [isCreating, setIsCreating] = useState(false);
+  const [createError, setCreateError] = useState('');
   
   // Seed Owner Modal
   const [isSeedOpen, setIsSeedOpen] = useState(false);
   const [seedTenantId, setSeedTenantId] = useState<string | null>(null);
   const [seedForm, setSeedForm] = useState({ phone: '', fullName: '' });
   const [isSeeding, setIsSeeding] = useState(false);
+  const [seedError, setSeedError] = useState('');
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -54,15 +56,16 @@ export default function SystemAdminDashboard() {
   const handleCreateTenant = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
-    setMessage(null);
+    setCreateError('');
     try {
       await api.post('/api/v1/admin/tenants', createForm);
       setMessage({ type: 'success', text: `Tenant "${createForm.name}" created successfully!` });
       setIsCreateOpen(false);
       setCreateForm({ name: '', slug: '', contactEmail: '', contactPhone: '' });
+      setCreateError('');
       fetchTenants();
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
+      setCreateError(err.message);
     } finally {
       setIsCreating(false);
     }
@@ -72,15 +75,16 @@ export default function SystemAdminDashboard() {
     e.preventDefault();
     if (!seedTenantId) return;
     setIsSeeding(true);
-    setMessage(null);
+    setSeedError('');
     try {
       await api.post(`/api/v1/admin/tenants/${seedTenantId}/owner`, seedForm);
       setMessage({ type: 'success', text: `Owner seeded successfully!` });
       setIsSeedOpen(false);
       setSeedTenantId(null);
       setSeedForm({ phone: '', fullName: '' });
+      setSeedError('');
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
+      setSeedError(err.message);
     } finally {
       setIsSeeding(false);
     }
@@ -165,27 +169,37 @@ export default function SystemAdminDashboard() {
       />
 
       {/* Create Tenant Modal */}
-      <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} title="Create New Institute">
+      <Modal isOpen={isCreateOpen} onClose={() => { setIsCreateOpen(false); setCreateError(''); }} title="Create New Institute">
         <form onSubmit={handleCreateTenant} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--tuite-space-md)' }}>
+          {createError && (
+            <div style={{ padding: '10px', backgroundColor: 'var(--tuite-error-light)', color: 'var(--tuite-error)', borderRadius: 'var(--tuite-radius-md)', fontSize: '13px' }}>
+              {createError}
+            </div>
+          )}
           <Input label="Name" placeholder="e.g. Apollo Academy" value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} required id="t-name" />
           <Input label="Slug" placeholder="e.g. apollo-academy" value={createForm.slug} onChange={(e) => setCreateForm({ ...createForm, slug: e.target.value })} required id="t-slug" />
           <Input label="Contact Email" type="email" placeholder="admin@apollo.com" value={createForm.contactEmail} onChange={(e) => setCreateForm({ ...createForm, contactEmail: e.target.value })} id="t-email" />
           <Input label="Contact Phone" type="tel" placeholder="+919876543210" value={createForm.contactPhone} onChange={(e) => setCreateForm({ ...createForm, contactPhone: e.target.value })} id="t-phone" />
           <div style={{ display: 'flex', gap: 'var(--tuite-space-sm)', justifyContent: 'flex-end', marginTop: 'var(--tuite-space-sm)' }}>
-            <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={() => { setIsCreateOpen(false); setCreateError(''); }}>Cancel</Button>
             <Button type="submit" isLoading={isCreating}>Create</Button>
           </div>
         </form>
       </Modal>
 
       {/* Seed Owner Modal */}
-      <Modal isOpen={isSeedOpen} onClose={() => setIsSeedOpen(false)} title="Seed Institute Owner">
+      <Modal isOpen={isSeedOpen} onClose={() => { setIsSeedOpen(false); setSeedError(''); }} title="Seed Institute Owner">
         <form onSubmit={handleSeedOwner} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--tuite-space-md)' }}>
+          {seedError && (
+            <div style={{ padding: '10px', backgroundColor: 'var(--tuite-error-light)', color: 'var(--tuite-error)', borderRadius: 'var(--tuite-radius-md)', fontSize: '13px' }}>
+              {seedError}
+            </div>
+          )}
           <p style={{ fontSize: '13px', color: 'var(--tuite-gray-600)' }}>Create the primary owner account for this institute. They can then log into their dashboard to customize their profile and invite staff.</p>
           <Input label="Owner Phone Number" type="tel" placeholder="+919876543210" value={seedForm.phone} onChange={(e) => setSeedForm({ ...seedForm, phone: e.target.value })} required id="o-phone" />
           <Input label="Owner Full Name (optional)" placeholder="John Doe" value={seedForm.fullName} onChange={(e) => setSeedForm({ ...seedForm, fullName: e.target.value })} id="o-name" />
           <div style={{ display: 'flex', gap: 'var(--tuite-space-sm)', justifyContent: 'flex-end', marginTop: 'var(--tuite-space-sm)' }}>
-            <Button type="button" variant="ghost" onClick={() => setIsSeedOpen(false)}>Cancel</Button>
+            <Button type="button" variant="ghost" onClick={() => { setIsSeedOpen(false); setSeedError(''); }}>Cancel</Button>
             <Button type="submit" isLoading={isSeeding}>Seed Owner</Button>
           </div>
         </form>

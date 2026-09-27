@@ -85,6 +85,31 @@ export class TenantsService {
   }
 
   /**
+   * Admin: List all tenants.
+   */
+  async findAll() {
+    const tenants = await this.prisma.withoutTenant().tenant.findMany({
+      orderBy: { created_at: 'desc' },
+      include: { feature_flags: true },
+    });
+
+    return tenants.map((t) => ({
+      id: t.id,
+      name: t.name,
+      slug: t.slug,
+      logoUrl: t.logo_url,
+      primaryColor: t.primary_color,
+      secondaryColor: t.secondary_color,
+      contactEmail: t.contact_email,
+      contactPhone: t.contact_phone,
+      address: t.address,
+      isActive: t.is_active,
+      createdAt: t.created_at,
+      updatedAt: t.updated_at,
+    }));
+  }
+
+  /**
    * Admin: Create a new tenant with default feature flags.
    */
   async create(dto: CreateTenantDto) {
@@ -103,6 +128,8 @@ export class TenantsService {
         logo_url: dto.logoUrl,
         primary_color: dto.primaryColor || '#1E40AF',
         secondary_color: dto.secondaryColor || '#F3F4F6',
+        contact_email: dto.contactEmail,
+        contact_phone: dto.contactPhone,
         // Create default feature flags (all disabled)
         feature_flags: {
           create: Object.values(FeatureName).map((feature) => ({

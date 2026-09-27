@@ -33,4 +33,14 @@ export class CreateTenantDto {
   @IsOptional()
   @IsHexColor()
   secondaryColor?: string;
+
+  @ApiPropertyOptional({ example: 'admin@myacademy.com', description: 'Contact email' })
+  @IsOptional()
+  @IsString()
+  contactEmail?: string;
+
+  @ApiPropertyOptional({ example: '+919876543210', description: 'Contact phone' })
+  @IsOptional()
+  @IsString()
+  contactPhone?: string;
 }

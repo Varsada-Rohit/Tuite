@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Param, Body, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, ParseUUIDPipe } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { Role } from '@tuite/shared-types';
 import { Roles } from '../../common/decorators';
@@ -20,6 +20,17 @@ import {
 @Roles(Role.SUPER_ADMIN)
 export class TenantsAdminController {
   constructor(private readonly tenantsService: TenantsService) {}
+
+  /**
+   * GET /api/v1/admin/tenants
+   * List all tenants.
+   */
+  @Get()
+  @ApiOperation({ summary: 'List all tenants (Super Admin only)' })
+  @ApiResponse({ status: 200, description: 'List of tenants' })
+  async findAll() {
+    return this.tenantsService.findAll();
+  }
 
   /**
    * POST /api/v1/admin/tenants

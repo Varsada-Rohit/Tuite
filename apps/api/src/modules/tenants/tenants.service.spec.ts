@@ -156,5 +156,107 @@ describe('TenantsService', () => {
       await expect(service.create(dto)).rejects.toThrow(ConflictException);
       expect(prismaService.tenant.create).not.toHaveBeenCalled();
     });
+
+    it('should pass contactEmail and contactPhone to Prisma when provided', async () => {
+      const dto = {
+        name: 'Contact Academy',
+        slug: 'contact-academy',
+        contactEmail: 'admin@contact.com',
+        contactPhone: '+919876543210',
+      };
+
+      prismaService.tenant.findUnique.mockResolvedValue(null);
+      prismaService.tenant.create.mockResolvedValue({ id: 'tenant-contact' } as any);
+
+      await service.create(dto);
+
+      expect(prismaService.tenant.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            contact_email: 'admin@contact.com',
+            contact_phone: '+919876543210',
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('findAll', () => {
+    it('should return all tenants with camelCase mapping', async () => {
+      const now = new Date();
+      const mockTenants = [
+        {
+          id: 'tenant-1',
+          name: 'Academy One',
+          slug: 'academy-one',
+          logo_url: 'https://example.com/logo1.png',
+          primary_color: '#111111',
+          secondary_color: '#222222',
+          contact_email: 'one@example.com',
+          contact_phone: '+911111111111',
+          address: '1 Main St',
+          is_active: true,
+          created_at: now,
+          updated_at: now,
+          feature_flags: [],
+        },
+        {
+          id: 'tenant-2',
+          name: 'Academy Two',
+          slug: 'academy-two',
+          logo_url: null,
+          primary_color: '#333333',
+          secondary_color: '#444444',
+          contact_email: null,
+          contact_phone: null,
+          address: null,
+          is_active: false,
+          created_at: now,
+          updated_at: now,
+          feature_flags: [],
+        },
+      ];
+
+      prismaService.tenant.findMany.mockResolvedValue(mockTenants as any);
+
+      const result = await service.findAll();
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toEqual({
+        id: 'tenant-1',
+        name: 'Academy One',
+        slug: 'academy-one',
+        logoUrl: 'https://example.com/logo1.png',
+        primaryColor: '#111111',
+        secondaryColor: '#222222',
+        contactEmail: 'one@example.com',
+        contactPhone: '+911111111111',
+        address: '1 Main St',
+        isActive: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+      expect(result[1].isActive).toBe(false);
+      expect(result[1].contactEmail).toBeNull();
+    });
+
+    it('should return empty array when no tenants exist', async () => {
+      prismaService.tenant.findMany.mockResolvedValue([]);
+
+      const result = await service.findAll();
+
+      expect(result).toEqual([]);
+    });
+
+    it('should order tenants by created_at desc', async () => {
+      prismaService.tenant.findMany.mockResolvedValue([]);
+
+      await service.findAll();
+
+      expect(prismaService.tenant.findMany).toHaveBeenCalledWith({
+        orderBy: { created_at: 'desc' },
+        include: { feature_flags: true },
+      });
+    });
   });
 });
