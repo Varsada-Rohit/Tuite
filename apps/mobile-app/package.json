@@ -23,8 +23,10 @@
     "react-native-screens": "~3.31.0"
   },
   "devDependencies": {
+    "@tuite/eslint-config": "*",
     "@tuite/typescript-config": "*",
     "@types/react": "~18.2.0",
+    "eslint": "^8.57.0",
     "typescript": "^5.5.0"
   }
 }

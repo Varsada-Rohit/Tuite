@@ -17,7 +17,9 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "devDependencies": {
+    "@tuite/eslint-config": "*",
     "@tuite/typescript-config": "*",
+    "eslint": "^8.57.0",
     "typescript": "^5.5.0"
   }
 }
