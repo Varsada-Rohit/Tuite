@@ -15,6 +15,9 @@ import { TenantsModule } from './modules/tenants/tenants.module';
 import { UsersModule } from './modules/users/users.module';
 import { BatchesModule } from './modules/batches/batches.module';
 import { StaffModule } from './modules/staff/staff.module';
+import { StudentsModule } from './modules/students/students.module';
+import { AttendanceModule } from './modules/attendance/attendance.module';
+import { LeavesModule } from './modules/leaves/leaves.module';
 
 // Common
 import { JwtAuthGuard, RolesGuard, TenantGuard } from './common/guards';
@@ -113,6 +116,11 @@ import { RequestIdMiddleware } from './common/middleware';
     UsersModule,
     BatchesModule,
     StaffModule,
+
+    // ─── Phase 3: Student Roster & Attendance ──────────
+    StudentsModule,
+    AttendanceModule,
+    LeavesModule,
   ],
   providers: [
     // Global guards — applied in order: JWT → Roles → Tenant

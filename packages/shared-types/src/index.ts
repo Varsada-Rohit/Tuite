@@ -10,3 +10,6 @@ export * from './user';
 export * from './api';
 export * from './batch';
 export * from './staff';
+export * from './student';
+export * from './attendance';
+export * from './leave';

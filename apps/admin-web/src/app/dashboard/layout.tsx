@@ -12,6 +12,8 @@ const NAV_ITEMS = [
   { label: 'Institute', href: '/dashboard/institute', icon: '🏫' },
   { label: 'Batches', href: '/dashboard/batches', icon: '📚' },
   { label: 'Staff', href: '/dashboard/staff', icon: '👩‍🏫' },
+  { label: 'Students', href: '/dashboard/students', icon: '🎓' },
+  { label: 'Leaves', href: '/dashboard/leaves', icon: '📋' },
   { label: 'Notes', href: '/dashboard/notes', icon: '📝', feature: 'NOTES' as FeatureName },
   { label: 'Videos', href: '/dashboard/videos', icon: '🎥', feature: 'VIDEO_LECTURES' as FeatureName },
 ];

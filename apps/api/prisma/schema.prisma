@@ -29,6 +29,24 @@ enum FeatureName {
   COMMUNICATION
 }
 
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
 // ─── Models ──────────────────────────────────────────────
 
 model Tenant {
@@ -46,9 +64,12 @@ model Tenant {
   updated_at      DateTime @updatedAt
 
   // Relations
-  users         User[]
-  feature_flags TenantFeatureFlag[]
-  batches       Batch[]
+  users          User[]
+  feature_flags  TenantFeatureFlag[]
+  batches        Batch[]
+  students       Student[]
+  attendance     Attendance[]
+  leave_requests LeaveRequest[]
 
   @@index([slug])
   @@map("tenants")
@@ -79,9 +100,11 @@ model User {
   updated_at DateTime @updatedAt
 
   // Relations
-  tenant          Tenant?        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
-  refresh_tokens  RefreshToken[]
-  teacher_batches TeacherBatch[]
+  tenant              Tenant?        @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  refresh_tokens      RefreshToken[]
+  teacher_batches     TeacherBatch[]
+  marked_attendance   Attendance[]   @relation("MarkedBy")
+  reviewed_leaves     LeaveRequest[] @relation("ReviewedBy")
 
   // Unique constraint for tenant-scoped phone.
   // Note: For SUPER_ADMIN (tenant_id = null), we add a partial unique
@@ -102,8 +125,11 @@ model Batch {
   updated_at  DateTime @updatedAt
 
   // Relations
-  tenant   Tenant         @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
-  teachers TeacherBatch[]
+  tenant         Tenant          @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  teachers       TeacherBatch[]
+  students       StudentBatch[]
+  attendance     Attendance[]
+  leave_requests LeaveRequest[]
 
   @@index([tenant_id])
   @@map("batches")
@@ -138,4 +164,104 @@ model RefreshToken {
   @@index([token_hash])
   @@index([user_id])
   @@map("refresh_tokens")
+}
+
+// ─── Phase 3: Student Roster & Attendance ────
+
+model Student {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenant_id     String    @db.Uuid
+  full_name     String    @db.VarChar(255)
+  phone         String?   @db.VarChar(20)
+  email         String?   @db.VarChar(320)
+  gender        Gender?
+  date_of_birth DateTime? @db.Date
+  address       String?   @db.Text
+
+  // Parent contact details
+  parent_name   String?   @db.VarChar(255)
+  parent_phone  String?   @db.VarChar(20)
+  parent_email  String?   @db.VarChar(320)
+
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  // Relations
+  tenant         Tenant         @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  batches        StudentBatch[]
+  attendance     Attendance[]
+  leave_requests LeaveRequest[]
+
+  @@index([tenant_id])
+  @@index([tenant_id, full_name])
+  @@map("students")
+}
+
+model StudentBatch {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenant_id   String   @db.Uuid
+  student_id  String   @db.Uuid
+  batch_id    String   @db.Uuid
+  enrolled_at DateTime @default(now())
+
+  // Relations
+  student Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  batch   Batch   @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, batch_id])
+  @@index([tenant_id])
+  @@index([batch_id])
+  @@map("student_batches")
+}
+
+model Attendance {
+  id         String           @id @default(uuid()) @db.Uuid
+  tenant_id  String           @db.Uuid
+  batch_id   String           @db.Uuid
+  student_id String           @db.Uuid
+  date       DateTime         @db.Date
+  status     AttendanceStatus
+  marked_by  String           @db.Uuid
+  created_at DateTime         @default(now())
+  updated_at DateTime         @updatedAt
+
+  // Relations
+  tenant  Tenant  @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  batch   Batch   @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  marker  User    @relation("MarkedBy", fields: [marked_by], references: [id])
+
+  // Prevent duplicate attendance for same student-batch-date
+  @@unique([batch_id, student_id, date])
+  @@index([tenant_id])
+  @@index([batch_id, date])
+  @@index([student_id])
+  @@map("attendance")
+}
+
+model LeaveRequest {
+  id          String      @id @default(uuid()) @db.Uuid
+  tenant_id   String      @db.Uuid
+  student_id  String      @db.Uuid
+  batch_id    String      @db.Uuid
+  start_date  DateTime    @db.Date
+  end_date    DateTime    @db.Date
+  reason      String      @db.Text
+  status      LeaveStatus @default(PENDING)
+  reviewed_by String?     @db.Uuid
+  reviewed_at DateTime?
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+
+  // Relations
+  tenant   Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  student  Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  batch    Batch    @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  reviewer User?    @relation("ReviewedBy", fields: [reviewed_by], references: [id])
+
+  @@index([tenant_id])
+  @@index([student_id])
+  @@index([tenant_id, status])
+  @@map("leave_requests")
 }
