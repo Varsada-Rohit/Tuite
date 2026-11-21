@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useLayoutEffect, useCallback } from 'react';
 import { brandColorsCssVars, type BrandColors } from '@tuite/design-tokens';
 import type { TenantProfile } from '@tuite/shared-types';
 import { api } from './api';
@@ -14,6 +14,29 @@ interface ThemeContextValue {
 }
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
+
+/** Cached tenant profile so the theme is available before the first paint. */
+export const TENANT_CACHE_KEY = 'tuite_tenant_profile';
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
+function readCachedTenant(): TenantProfile | null {
+  try {
+    const raw = localStorage.getItem(TENANT_CACHE_KEY);
+    return raw ? (JSON.parse(raw) as TenantProfile) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedTenant(profile: TenantProfile | null) {
+  try {
+    if (profile) localStorage.setItem(TENANT_CACHE_KEY, JSON.stringify(profile));
+    else localStorage.removeItem(TENANT_CACHE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 /**
  * Injects tenant brand colors as CSS custom properties on the document root.
@@ -39,7 +62,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
 
   // Load the logged-in user's tenant (restores theme/details after reload or admin login)
-  const { user } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
+
+  // Restore cached tenant before paint to avoid a default-theme flash
+  useIsomorphicLayoutEffect(() => {
+    const cached = readCachedTenant();
+    if (cached) setTenant(cached);
+  }, []);
+
+  // Drop the cache once we know nobody is signed in
+  useEffect(() => {
+    if (!authLoading && !user) writeCachedTenant(null);
+  }, [authLoading, user]);
+
   const userTenantId = user?.tenantId ?? null;
   useEffect(() => {
     if (!userTenantId) return;
@@ -48,7 +83,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     api
       .get<TenantProfile>('/api/v1/tenants/profile')
       .then((profile) => {
-        if (!cancelled) setTenant(profile);
+        if (!cancelled) {
+          setTenant(profile);
+          writeCachedTenant(profile);
+        }
       })
       .catch(() => {
         /* keep defaults */
@@ -62,7 +100,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [userTenantId]);
 
   // Apply theme whenever tenant changes
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (tenant) {
       applyThemeToDOM(tenant);
     }
@@ -81,6 +119,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const updateTenantTheme = useCallback((profile: TenantProfile) => {
     setTenant(profile);
+    writeCachedTenant(profile);
   }, []);
 
   return (
