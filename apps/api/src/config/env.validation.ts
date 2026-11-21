@@ -24,6 +24,9 @@ export const envSchema = z.object({
   // CORS
   CORS_ORIGINS: z.string().default('http://localhost:3000'),
 
+  // Temporary seed endpoint token (unset = endpoint disabled)
+  SEED_TOKEN: z.string().min(16).optional(),
+
   // Throttling
   THROTTLE_TTL: z.coerce.number().int().positive().default(60),
   THROTTLE_LIMIT: z.coerce.number().int().positive().default(20),

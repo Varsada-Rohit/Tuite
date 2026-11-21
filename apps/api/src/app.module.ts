@@ -18,6 +18,7 @@ import { StaffModule } from './modules/staff/staff.module';
 import { StudentsModule } from './modules/students/students.module';
 import { AttendanceModule } from './modules/attendance/attendance.module';
 import { LeavesModule } from './modules/leaves/leaves.module';
+import { SeedModule } from './modules/seed/seed.module'; // TEMP: remove after seeding
 
 // Common
 import { JwtAuthGuard, RolesGuard, TenantGuard } from './common/guards';
@@ -121,6 +122,7 @@ import { RequestIdMiddleware } from './common/middleware';
     StudentsModule,
     AttendanceModule,
     LeavesModule,
+    SeedModule, // TEMP: remove after seeding
   ],
   providers: [
     // Global guards — applied in order: JWT → Roles → Tenant
