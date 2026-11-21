@@ -31,6 +31,19 @@ export class TenantsController {
   }
 
   /**
+   * GET /api/v1/tenants/profile
+   * Returns the authenticated user's own tenant profile (used to restore
+   * theme and prefill the Institute page after a reload).
+   */
+  @Get('profile')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get the current tenant profile' })
+  @ApiResponse({ status: 200, description: 'Tenant profile returned successfully' })
+  async getProfile(@CurrentTenant() tenantId: string) {
+    return this.tenantsService.getProfile(tenantId);
+  }
+
+  /**
    * PATCH /api/v1/tenants/profile
    * Update the current tenant's profile (contact info, branding).
    * Only accessible by the Tuition Owner.

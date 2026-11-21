@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { brandColorsCssVars, type BrandColors } from '@tuite/design-tokens';
 import type { TenantProfile } from '@tuite/shared-types';
 import { api } from './api';
+import { useAuth } from './auth-context';
 
 interface ThemeContextValue {
   tenant: TenantProfile | null;
@@ -36,6 +37,29 @@ function applyThemeToDOM(profile: TenantProfile) {
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [tenant, setTenant] = useState<TenantProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Load the logged-in user's tenant (restores theme/details after reload or admin login)
+  const { user } = useAuth();
+  const userTenantId = user?.tenantId ?? null;
+  useEffect(() => {
+    if (!userTenantId) return;
+    let cancelled = false;
+    setIsLoading(true);
+    api
+      .get<TenantProfile>('/api/v1/tenants/profile')
+      .then((profile) => {
+        if (!cancelled) setTenant(profile);
+      })
+      .catch(() => {
+        /* keep defaults */
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userTenantId]);
 
   // Apply theme whenever tenant changes
   useEffect(() => {

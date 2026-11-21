@@ -52,6 +52,24 @@ export class TenantsService {
   }
 
   /**
+   * Authenticated: Get the current tenant's profile by id.
+   */
+  async getProfile(tenantId: string): Promise<TenantProfile> {
+    const tenant = await this.findOrFail(tenantId);
+    return {
+      id: tenant.id,
+      name: tenant.name,
+      slug: tenant.slug,
+      logoUrl: tenant.logo_url,
+      primaryColor: tenant.primary_color,
+      secondaryColor: tenant.secondary_color,
+      contactEmail: tenant.contact_email,
+      contactPhone: tenant.contact_phone,
+      address: tenant.address,
+    };
+  }
+
+  /**
    * Owner: Update tenant profile (contact info, branding).
    */
   async updateProfile(tenantId: string, dto: UpdateTenantProfileDto): Promise<TenantProfile> {
